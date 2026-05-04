@@ -200,8 +200,9 @@
 
 <div class="stars"></div>
 
-<!-- Teniamo solo l'audio di sottofondo nel tag HTML. Il suono della spada sarà gestito via RAM (Web Audio API) -->
+<!-- Audio tags -->
 <audio id="bg-music" loop src="musica.mp3"></audio>
+<audio id="win-music" loop src="cantina.mp3"></audio>
 
 <div class="quiz-container">
     <h1>MAY THE KNOWLEDGE BE WITH YOU</h1>
@@ -210,16 +211,13 @@
         <span>Puntos: <span id="score">0</span></span>
     </div>
     <div class="question" id="question">Texto de la pregunta</div>
-    <div class="btn-grid" id="answer-buttons">
-        <!-- Los botones se generarán vía JavaScript -->
-    </div>
+    <div class="btn-grid" id="answer-buttons"></div>
     <div class="controls">
         <button class="next-btn" id="next-btn">Siguiente Pregunta</button>
     </div>
 </div>
 
 <script>
-    // --- LOGICA DEL QUIZ ---
     const questions = [
         { question: "¿Cuál es el planeta natal de Luke Skywalker, donde vive con sus tíos al principio de 'Una Nueva Esperanza'?", options: ["Tatooine", "Jakku", "Hoth", "Alderaan"], correct: "Tatooine" },
         { question: "¿Quién construyó al droide C-3PO según lo revelado en las Precuelas?", options: ["Obi-Wan Kenobi", "Anakin Skywalker", "Padmé Amidala", "Bail Organa"], correct: "Anakin Skywalker" },
@@ -234,7 +232,7 @@
         { question: "¿Quién mata al Emperador Palpatine en 'El Retorno del Jedi'?", options: ["Luke Skywalker", "Darth Vader", "Lando Calrissian", "Yoda"], correct: "Darth Vader" },
         { question: "¿En qué película ocurre el primer duelo entre Anakin Skywalker y el Conde Dooku?", options: ["La Amenaza Fantasma", "El Ataque de los Clones", "La Venganza de los Sith", "Una Nueva Esperanza"], correct: "El Ataque de los Clones" },
         { question: "¿Cómo se llama el cazarrecompensas que es arrojado al pozo del Sarlacc?", options: ["Greedo", "Boba Fett", "Jango Fett", "Bossk"], correct: "Boba Fett" },
-        { question: "¿Qué orden emite el Emperador para exterminar a todos los Jedi?", options: ["Orden 11", "Orden 66", "Orden 99", "Protocolo Sith"], correct: "Orden 66" },
+        { question: "¿Qué orden emite el Emperador para exterminar a todos los Jedi?", options: ["Orden 11", "Orden 66", "Orden 99", "Protocollo Sith"], correct: "Orden 66" },
         { question: "¿Quién es el padre de Leia Organa?", options: ["Bail Organa", "Anakin Skywalker", "Obi-Wan Kenobi", "Wilhuff Tarkin"], correct: "Anakin Skywalker" },
         { question: "¿En qué planeta se desarrolla el duelo final entre Obi-Wan y Anakin en 'La Venganza de los Sith'?", options: ["Coruscant", "Mustafar", "Utapau", "Kamino"], correct: "Mustafar" },
         { question: "¿Cuál es el rango militar de Han Solo en la película 'El Retorno del Jedi'?", options: ["Capitán", "General", "Almirante", "Comandante"], correct: "General" },
@@ -258,46 +256,45 @@
     const currentQElement = document.getElementById("current-q");
     
     const bgMusic = document.getElementById('bg-music');
+    const winMusic = document.getElementById('win-music');
     let musicStarted = false;
 
-    // --- SISTEMA AUDIO A ZERO LATENZA (WEB AUDIO API) ---
+    // --- SISTEMA AUDIO A ZERO LATENZA ---
     let audioContext;
-    let saberBuffer; // Qui salviamo il suono in RAM
+    let saberBuffer; 
+    let wrongBuffer; // Buffer per il suono dell'errore
 
-    // Inizializziamo l'audio non appena la pagina si carica
     window.addEventListener('load', () => {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        loadSaberSound();
+        loadSounds();
     });
 
-    // Scarichiamo e decodifichiamo il file MP3 nella memoria RAM
-    async function loadSaberSound() {
+    async function loadSounds() {
         try {
-            const response = await fetch('saber.mp3');
-            const arrayBuffer = await response.arrayBuffer();
-            // Decodifica il file e lo salva in saberBuffer. Da questo momento è pronto a suonare in 0 millisecondi
-            saberBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            // Carica il suono della spada
+            const saberResponse = await fetch('saber.mp3');
+            const saberArrayBuffer = await saberResponse.arrayBuffer();
+            saberBuffer = await audioContext.decodeAudioData(saberArrayBuffer);
+
+            // Carica il suono dell'errore
+            const wrongResponse = await fetch('wrong.mp3');
+            const wrongArrayBuffer = await wrongResponse.arrayBuffer();
+            wrongBuffer = await audioContext.decodeAudioData(wrongArrayBuffer);
+
         } catch (error) {
-            console.error("Errore nel caricamento del suono del lightsaber:", error);
+            console.error("Errore nel caricamento dei suoni:", error);
         }
     }
 
-    // Funzione per suonare l'audio istantaneamente
-    function playSaberSound() {
-        if (!audioContext || !saberBuffer) return;
-        
-        // Se l'audio context è bloccato dal browser, lo sblocchiamo
+    function playSound(buffer) {
+        if (!audioContext || !buffer) return;
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
-        
-        // Creiamo una "sorgente" vuota e le iniettiamo il suono già caricato in RAM
         const source = audioContext.createBufferSource();
-        source.buffer = saberBuffer;
+        source.buffer = buffer;
         source.connect(audioContext.destination);
-        
-        // Il parametro 0 significa "SUONA SUBITO ADESSO"
-        source.start(0); 
+        source.start(0);
     }
 
     function shuffleArray(array) {
@@ -307,6 +304,9 @@
     function startQuiz() {
         currentQuestionIndex = 0;
         score = 0;
+        // Se ricomincia, ferma la musica della cantina e riprende quella epica se era partita
+        winMusic.pause();
+        winMusic.currentTime = 0;
         showQuestion();
     }
 
@@ -346,7 +346,6 @@
     }
 
     function selectAnswer(e) {
-        // --- TRUCCO MUSICA SOTTOFONDO ---
         if (!musicStarted) {
             bgMusic.play().then(() => {
                 musicStarted = true;
@@ -355,17 +354,17 @@
             });
         }
 
-        // --- SUONO SPADA LASER IMMEDIATO ---
-        playSaberSound();
-
         const selectedBtn = e.target;
         const isCorrect = selectedBtn.dataset.correct === "true";
+        
         if (isCorrect) {
             selectedBtn.classList.add("correct");
             score++;
             scoreElement.innerText = score;
+            playSound(saberBuffer); // Suono spada laser
         } else {
             selectedBtn.classList.add("wrong");
+            playSound(wrongBuffer); // Suono blaster/errore
         }
         
         Array.from(answerButtons.children).forEach(button => {
@@ -386,6 +385,11 @@
         if(score >= 22) {
             title = "¡HAS GANADO UNA EMPANADA!";
             message = "Has respondido correctamente al menos 22 de 25 preguntas. Tu conocimiento de la galaxia es absoluto y tu recompensa te espera.";
+            
+            // FERMA la musica epica e FAR PARTIRE la cantina!
+            bgMusic.pause();
+            winMusic.play().catch(e => console.log("Autoplay cantina bloccato"));
+
         } else if(score >= 15) {
             title = "CABALLERO JEDI";
             message = "Tu entrenamiento ha terminado, pero aún tienes mucho que aprender sobre la Fuerza.";
