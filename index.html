@@ -57,6 +57,65 @@
             to { transform: translateY(-2000px); }
         }
 
+        /* --- STILE SCHERMATA INTRO --- */
+        #intro-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 5, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .intro-text {
+            font-family: 'Star Jedi', sans-serif;
+            color: var(--sw-yellow);
+            font-size: 2em;
+            line-height: 1.5;
+            max-width: 800px;
+            text-shadow: 0 0 20px rgba(255, 232, 31, 0.6);
+            animation: fadeIn 2s ease-in-out;
+            margin-bottom: 50px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .start-btn {
+            background: transparent;
+            color: var(--sw-blue);
+            border: 2px solid var(--sw-blue);
+            padding: 15px 40px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            transition: 0.3s;
+            animation: pulse 2s infinite;
+        }
+
+        .start-btn:hover {
+            background: rgba(75, 213, 238, 0.2);
+            box-shadow: 0 0 30px rgba(75, 213, 238, 0.5);
+            color: #fff;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px rgba(75, 213, 238, 0.2); }
+            50% { box-shadow: 0 0 20px rgba(75, 213, 238, 0.5); }
+            100% { box-shadow: 0 0 10px rgba(75, 213, 238, 0.2); }
+        }
+
+        /* --- STILE QUIZ --- */
         .quiz-container {
             background: rgba(10, 15, 20, 0.85);
             padding: 40px 30px;
@@ -66,6 +125,7 @@
             max-width: 700px;
             width: 90%;
             position: relative;
+            display: none; /* Nascosto all'inizio */
         }
 
         .quiz-container::after {
@@ -190,6 +250,7 @@
 
         @media (max-width: 600px) {
             h1 { font-size: 1.3em; }
+            .intro-text { font-size: 1.4em; }
             .question { font-size: 0.95em; }
             .btn { font-size: 0.8em; padding: 12px; }
             .hud-tracker { font-size: 0.75em; }
@@ -200,12 +261,19 @@
 
 <div class="stars"></div>
 
-<!-- Audio tags (musica sottofondo, vittoria e sconfitta) -->
+<!-- Audio tags spostati fuori per essere accessibili subito -->
 <audio id="bg-music" loop src="musica.mp3"></audio>
 <audio id="win-music" loop src="cantina.mp3"></audio>
 <audio id="defeat-music" loop src="defeat.mp3"></audio>
 
-<div class="quiz-container">
+<!-- SCHERMATA INTRO DRAMMATICA -->
+<div id="intro-screen">
+    <div class="intro-text">Ha llegado el momento de descubrir si realmente conoces la Fuerza.</div>
+    <button id="start-btn" class="start-btn">Iniciar Prueba</button>
+</div>
+
+<!-- CONTENITORE QUIZ (NASCOSTO ALL'INIZIO) -->
+<div class="quiz-container" id="quiz-container">
     <h1>MAY THE KNOWLEDGE BE WITH YOU</h1>
     <div class="hud-tracker">
         <span>Sector: <span id="current-q">1</span>/25</span>
@@ -233,7 +301,7 @@
         { question: "¿Quién mata al Emperador Palpatine en 'El Retorno del Jedi'?", options: ["Luke Skywalker", "Darth Vader", "Lando Calrissian", "Yoda"], correct: "Darth Vader" },
         { question: "¿En qué película ocurre el primer duelo entre Anakin Skywalker y el Conde Dooku?", options: ["La Amenaza Fantasma", "El Ataque de los Clones", "La Venganza de los Sith", "Una Nueva Esperanza"], correct: "El Ataque de los Clones" },
         { question: "¿Cómo se llama el cazarrecompensas que es arrojado al pozo del Sarlacc?", options: ["Greedo", "Boba Fett", "Jango Fett", "Bossk"], correct: "Boba Fett" },
-        { question: "¿Qué orden emite el Emperador para exterminar a todos los Jedi?", options: ["Orden 11", "Orden 66", "Orden 99", "Protocollo Sith"], correct: "Orden 66" },
+        { question: "¿Qué orden emite el Emperador para exterminar a todos los Jedi?", options: ["Orden 11", "Orden 66", "Orden 99", "Protocolo Sith"], correct: "Orden 66" },
         { question: "¿Quién es el padre de Leia Organa?", options: ["Bail Organa", "Anakin Skywalker", "Obi-Wan Kenobi", "Wilhuff Tarkin"], correct: "Anakin Skywalker" },
         { question: "¿En qué planeta se desarrolla el duelo final entre Obi-Wan y Anakin en 'La Venganza de los Sith'?", options: ["Coruscant", "Mustafar", "Utapau", "Kamino"], correct: "Mustafar" },
         { question: "¿Cuál es el rango militar de Han Solo en la película 'El Retorno del Jedi'?", options: ["Capitán", "General", "Almirante", "Comandante"], correct: "General" },
@@ -250,6 +318,9 @@
     let currentQuestionIndex = 0;
     let score = 0;
 
+    const introScreen = document.getElementById('intro-screen');
+    const startBtn = document.getElementById('start-btn');
+    const quizContainer = document.getElementById('quiz-container');
     const questionElement = document.getElementById("question");
     const answerButtons = document.getElementById("answer-buttons");
     const nextButton = document.getElementById("next-btn");
@@ -259,13 +330,12 @@
     const bgMusic = document.getElementById('bg-music');
     const winMusic = document.getElementById('win-music');
     const defeatMusic = document.getElementById('defeat-music');
-    let musicStarted = false;
 
     // --- SISTEMA AUDIO A ZERO LATENZA (SFX) ---
     let audioContext;
     let saberBuffer; 
     let wrongBuffer; 
-    let nextBuffer; // Buffer per il suono "Prossima domanda"
+    let nextBuffer; 
 
     window.addEventListener('load', () => {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -282,7 +352,6 @@
             const wrongArrayBuffer = await wrongResponse.arrayBuffer();
             wrongBuffer = await audioContext.decodeAudioData(wrongArrayBuffer);
 
-            // Carichiamo il suono per il bottone successivo
             const nextResponse = await fetch('next.mp3');
             const nextArrayBuffer = await nextResponse.arrayBuffer();
             nextBuffer = await audioContext.decodeAudioData(nextArrayBuffer);
@@ -303,6 +372,21 @@
         source.start(0);
     }
 
+    // --- LOGICA INTRO E AVVIO ---
+    startBtn.addEventListener('click', () => {
+        // Facciamo scomparire l'intro e apparire il quiz
+        introScreen.style.display = 'none';
+        quizContainer.style.display = 'block';
+        
+        // Avviamo la musica di sottofondo! Questo è il click che sblocca tutto.
+        bgMusic.play().then(() => {
+            console.log("Musica partita con successo!");
+        }).catch(e => console.log("Autoplay bloccato nonostante il click."));
+        
+        // Avviamo il quiz
+        startQuiz();
+    });
+
     function shuffleArray(array) {
         return array.sort(() => Math.random() - 0.5);
     }
@@ -310,9 +394,6 @@
     function startQuiz() {
         currentQuestionIndex = 0;
         score = 0;
-        // Se ricomincia, ferma tutte le musiche di fine gioco e resetta
-        winMusic.pause(); winMusic.currentTime = 0;
-        defeatMusic.pause(); defeatMusic.currentTime = 0;
         showQuestion();
     }
 
@@ -352,14 +433,6 @@
     }
 
     function selectAnswer(e) {
-        if (!musicStarted) {
-            bgMusic.play().then(() => {
-                musicStarted = true;
-            }).catch((error) => {
-                console.log("Musica di sottofondo bloccata.");
-            });
-        }
-
         const selectedBtn = e.target;
         const isCorrect = selectedBtn.dataset.correct === "true";
         
@@ -388,19 +461,28 @@
         let title = "";
         let message = "";
         
-        // Fermiamo sempre la musica di sottofondo alla fine
         bgMusic.pause();
         
-        if(score >= 22) {
-            title = "¡HAS GANADO UNA EMPANADA!";
-            message = "Has respondido correctamente al menos 22 de 25 preguntas. Tu conocimiento de la galaxia es absoluto y tu recompensa te espera.";
+        if(score === 25) {
+            title = "¡GRAN MAESTRA JEDI!";
+            message = "Has respondido correctamente a las 25 preguntas. ¡Has ganado una empanada! Tu dominio de la Fuerza es absoluto y legendario.";
             winMusic.play().catch(e => console.log("Autoplay cantina bloccato"));
-            defeatMusic.pause(); // Sicurezza
+            defeatMusic.pause(); 
+        } else if(score >= 22) {
+            title = "¡MAESTRA JEDI!";
+            message = "Has respondido correctamente a las 25 preguntas. ¡Has ganado una empanada! Tu dominio de la Fuerza es absoluto y legendario.";
+            winMusic.play().catch(e => console.log("Autoplay cantina bloccato"));
+            defeatMusic.pause(); 
+        } else if(score >= 22) {
+            title = "¡MAESTRA JEDI!";
+            message = "Has respondido correctamente " + score + " de 25 preguntas. ¡Has ganado una empanada! Tu conocimiento de la galaxia es formidable.";
+            winMusic.play().catch(e => console.log("Autoplay cantina bloccato"));
+            defeatMusic.pause();
         } else if(score >= 15) {
             title = "CABALLERO JEDI";
             message = "Tu entrenamiento ha terminado, pero aún tienes mucho que aprender sobre la Fuerza.";
             defeatMusic.play().catch(e => console.log("Autoplay sconfitta bloccato"));
-            winMusic.pause(); // Sicurezza
+            winMusic.pause(); 
         } else if(score >= 8) {
             title = "PADAWAN";
             message = "Estás en el buen camino, pero tus habilidades aún son rudimentarias.";
@@ -424,9 +506,14 @@
     }
 
     nextButton.addEventListener("click", () => {
-        // Suono di R2-D2 istantaneo quando clicco il bottone
+        // Se il bottone è "Reiniciar", ricarica la pagina da zero (come F5)
+        if (nextButton.innerHTML === "Reiniciar Entrenamiento") {
+            location.reload();
+            return;
+        }
+
         playSound(nextBuffer);
-        
+
         currentQuestionIndex++;
         if (currentQuestionIndex < questions.length) {
             showQuestion();
@@ -435,8 +522,8 @@
         }
     });
 
-    startQuiz();
 </script>
 
 </body>
 </html>
+        
