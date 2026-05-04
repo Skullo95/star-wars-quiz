@@ -200,8 +200,9 @@
 
 <div class="stars"></div>
 
-<!-- Audio: NON partirà da solo all'apertura, ma al primo click su una risposta -->
+<!-- Audio di sottofondo e SFX del lightsaber -->
 <audio id="bg-music" loop src="musica.mp3"></audio>
+<audio id="sfx-saber" src="saber.mp3"></audio>
 
 <div class="quiz-container">
     <h1>MAY THE KNOWLEDGE BE WITH YOU</h1>
@@ -257,9 +258,10 @@
     const scoreElement = document.getElementById("score");
     const currentQElement = document.getElementById("current-q");
     
-    // Prendo l'elemento audio
+    // Prendo entrambi gli elementi audio
     const bgMusic = document.getElementById('bg-music');
-    let musicStarted = false; // Flag per evitare di richiamare play() inutilmente
+    const sfxSaber = document.getElementById('sfx-saber');
+    let musicStarted = false;
 
     function shuffleArray(array) {
         return array.sort(() => Math.random() - 0.5);
@@ -307,14 +309,18 @@
     }
 
     function selectAnswer(e) {
-        // --- TRUCCO AUDIO: Parte al primo click su una risposta ---
+        // --- TRUCCO AUDIO 1: Musica di sottofondo al primo click ---
         if (!musicStarted) {
             bgMusic.play().then(() => {
-                musicStarted = true; // Segniamo che è partita
+                musicStarted = true;
             }).catch((error) => {
-                console.log("Audio bloccato dal browser al primo click.");
+                console.log("Musica di sottofondo bloccata.");
             });
         }
+
+        // --- TRUCCO AUDIO 2: Suono del lightsaber ad ogni click ---
+        sfxSaber.currentTime = 0; // Riavvolge l'audio per poterlo ripetere velocemente
+        sfxSaber.play().catch(error => console.log("SFX bloccato dal browser"));
 
         const selectedBtn = e.target;
         const isCorrect = selectedBtn.dataset.correct === "true";
