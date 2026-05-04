@@ -92,6 +92,7 @@
         .hud-tracker {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             margin-bottom: 25px;
             font-size: 0.85em;
             color: var(--sw-blue);
@@ -191,12 +192,16 @@
             h1 { font-size: 1.3em; }
             .question { font-size: 0.95em; }
             .btn { font-size: 0.8em; padding: 12px; }
+            .hud-tracker { font-size: 0.75em; }
         }
     </style>
 </head>
 <body>
 
 <div class="stars"></div>
+
+<!-- Audio con solo autoplay e loop -->
+<audio loop autoplay src="musica.mp3"></audio>
 
 <div class="quiz-container">
     <h1>MAY THE KNOWLEDGE BE WITH YOU</h1>
@@ -214,6 +219,7 @@
 </div>
 
 <script>
+    // --- LOGICA DEL QUIZ ---
     const questions = [
         { question: "¿Cuál es el planeta natal de Luke Skywalker, donde vive con sus tíos al principio de 'Una Nueva Esperanza'?", options: ["Tatooine", "Jakku", "Hoth", "Alderaan"], correct: "Tatooine" },
         { question: "¿Quién construyó al droide C-3PO según lo revelado en las Precuelas?", options: ["Obi-Wan Kenobi", "Anakin Skywalker", "Padmé Amidala", "Bail Organa"], correct: "Anakin Skywalker" },
@@ -269,7 +275,6 @@
         
         questionElement.innerHTML = currentQuestion.question;
         
-        // Lógica para cambiar el texto del botón en la última pregunta
         if (currentQuestionIndex === questions.length - 1) {
             nextButton.innerHTML = "Finalizar Entrenamiento";
         } else {
@@ -323,7 +328,6 @@
         let title = "";
         let message = "";
         
-        // Se gana la empanada con 22 o más respuestas correctas
         if(score >= 22) {
             title = "¡HAS GANADO UNA EMPANADA!";
             message = "Has respondido correctamente al menos 22 de 25 preguntas. Tu conocimiento de la galaxia es absoluto y tu recompensa te espera.";
