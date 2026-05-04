@@ -200,8 +200,8 @@
 
 <div class="stars"></div>
 
-<!-- Audio con solo autoplay e loop -->
-<audio loop autoplay src="musica.mp3"></audio>
+<!-- Audio: NON partirà da solo all'apertura, ma al primo click su una risposta -->
+<audio id="bg-music" loop src="musica.mp3"></audio>
 
 <div class="quiz-container">
     <h1>MAY THE KNOWLEDGE BE WITH YOU</h1>
@@ -256,6 +256,10 @@
     const nextButton = document.getElementById("next-btn");
     const scoreElement = document.getElementById("score");
     const currentQElement = document.getElementById("current-q");
+    
+    // Prendo l'elemento audio
+    const bgMusic = document.getElementById('bg-music');
+    let musicStarted = false; // Flag per evitare di richiamare play() inutilmente
 
     function shuffleArray(array) {
         return array.sort(() => Math.random() - 0.5);
@@ -303,6 +307,15 @@
     }
 
     function selectAnswer(e) {
+        // --- TRUCCO AUDIO: Parte al primo click su una risposta ---
+        if (!musicStarted) {
+            bgMusic.play().then(() => {
+                musicStarted = true; // Segniamo che è partita
+            }).catch((error) => {
+                console.log("Audio bloccato dal browser al primo click.");
+            });
+        }
+
         const selectedBtn = e.target;
         const isCorrect = selectedBtn.dataset.correct === "true";
         if (isCorrect) {
