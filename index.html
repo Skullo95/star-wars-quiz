@@ -1,0 +1,366 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Star Wars</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Star+Jedi&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sw-yellow: #FFE81F;
+            --sw-blue: #4bd5ee;
+            --sw-red: #ff3333;
+            --sw-green: #33ff33;
+            --sw-bg: #050505;
+        }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: var(--sw-bg);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -2;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+        }
+
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 130px 80px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 160px 120px, #ddd, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            animation: scroll 60s linear infinite;
+        }
+
+        @keyframes scroll {
+            from { transform: translateY(0); }
+            to { transform: translateY(-2000px); }
+        }
+
+        .quiz-container {
+            background: rgba(10, 15, 20, 0.85);
+            padding: 40px 30px;
+            border-radius: 4px;
+            border: 1px solid rgba(75, 213, 238, 0.3);
+            box-shadow: 0 0 30px rgba(75, 213, 238, 0.1), inset 0 0 20px rgba(0,0,0,0.8);
+            max-width: 700px;
+            width: 90%;
+            position: relative;
+        }
+
+        .quiz-container::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(75, 213, 238, 0.04), rgba(0, 255, 0, 0.02), rgba(75, 213, 238, 0.04));
+            z-index: 2;
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+        }
+
+        h1 {
+            text-align: center;
+            font-family: 'Star Jedi', sans-serif;
+            letter-spacing: 2px;
+            color: var(--sw-yellow);
+            text-shadow: 0 0 15px rgba(255, 232, 31, 0.4);
+            margin-top: 0;
+            font-size: 1.8em;
+        }
+
+        .hud-tracker {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            font-size: 0.85em;
+            color: var(--sw-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(75, 213, 238, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .question {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            color: #fff;
+            text-align: center;
+            line-height: 1.5;
+            text-shadow: 0 0 5px rgba(255,255,255,0.2);
+        }
+
+        .btn-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn {
+            background: rgba(20, 25, 30, 0.9);
+            border: 1px solid rgba(75, 213, 238, 0.5);
+            color: var(--sw-blue);
+            padding: 15px 20px;
+            border-radius: 2px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9em;
+            text-align: left;
+            transition: 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: rgba(75, 213, 238, 0.1);
+            border-color: var(--sw-blue);
+            box-shadow: 0 0 15px rgba(75, 213, 238, 0.3), inset 0 0 15px rgba(75, 213, 238, 0.1);
+            color: #fff;
+        }
+
+        .btn:disabled {
+            cursor: default;
+        }
+
+        .correct {
+            background: rgba(51, 255, 51, 0.15) !important;
+            border-color: var(--sw-green) !important;
+            color: var(--sw-green) !important;
+            box-shadow: 0 0 20px rgba(51, 255, 51, 0.3), inset 0 0 20px rgba(51, 255, 51, 0.1) !important;
+            text-shadow: 0 0 5px rgba(51, 255, 51, 0.5);
+        }
+
+        .wrong {
+            background: rgba(255, 51, 51, 0.15) !important;
+            border-color: var(--sw-red) !important;
+            color: var(--sw-red) !important;
+            box-shadow: 0 0 20px rgba(255, 51, 51, 0.3), inset 0 0 20px rgba(255, 51, 51, 0.1) !important;
+            text-shadow: 0 0 5px rgba(255, 51, 51, 0.5);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .next-btn {
+            background: transparent;
+            color: var(--sw-yellow);
+            border: 1px solid var(--sw-yellow);
+            padding: 12px 30px;
+            border-radius: 2px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: none;
+            transition: 0.2s;
+        }
+
+        .next-btn:hover {
+            background: rgba(255, 232, 31, 0.1);
+            box-shadow: 0 0 20px rgba(255, 232, 31, 0.3);
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.3em; }
+            .question { font-size: 0.95em; }
+            .btn { font-size: 0.8em; padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="stars"></div>
+
+<div class="quiz-container">
+    <h1>MAY THE KNOWLEDGE BE WITH YOU</h1>
+    <div class="hud-tracker">
+        <span>Sector: <span id="current-q">1</span>/25</span>
+        <span>Puntos: <span id="score">0</span></span>
+    </div>
+    <div class="question" id="question">Texto de la pregunta</div>
+    <div class="btn-grid" id="answer-buttons">
+        <!-- Los botones se generarán vía JavaScript -->
+    </div>
+    <div class="controls">
+        <button class="next-btn" id="next-btn">Siguiente Pregunta</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { question: "¿Cuál es el planeta natal de Luke Skywalker, donde vive con sus tíos al principio de 'Una Nueva Esperanza'?", options: ["Tatooine", "Jakku", "Hoth", "Alderaan"], correct: "Tatooine" },
+        { question: "¿Quién construyó al droide C-3PO según lo revelado en las Precuelas?", options: ["Obi-Wan Kenobi", "Anakin Skywalker", "Padmé Amidala", "Bail Organa"], correct: "Anakin Skywalker" },
+        { question: "¿Qué especie alienígena habita en la luna boscosa de Endor y ayuda a los Rebeldes?", options: ["Wookiee", "Ewok", "Gungan", "Jawa"], correct: "Ewok" },
+        { question: "En 'El Imperio Contraataca', ¿quién congela a Han Solo en carbonita?", options: ["Boba Fett", "Darth Vader", "Jabba the Hutt", "Lando Calrissian"], correct: "Darth Vader" },
+        { question: "¿Cuál es el color del sable de luz de Mace Windu?", options: ["Verde", "Violeta", "Azul", "Rojo"], correct: "Violeta" },
+        { question: "¿Qué Maestro Jedi entrenó a Obi-Wan Kenobi?", options: ["Yoda", "Qui-Gon Jinn", "Mace Windu", "Conde Dooku"], correct: "Qui-Gon Jinn" },
+        { question: "¿Cuál es el nombre de la nave espacial de Han Solo?", options: ["Slave I", "Halcón Milenario", "X-Wing", "Destructor Estelar"], correct: "Halcón Milenario" },
+        { question: "¿Cómo muere la madre de Anakin, Shmi Skywalker?", options: ["Durante el parto", "Asesinada por los Moradores de las Arenas", "En un accidente en una nave", "Asesinada por Darth Maul"], correct: "Asesinada por los Moradores de las Arenas" },
+        { question: "¿Quién es el aprendiz Sith de Darth Sidious en 'La Amenaza Fantasma'?", options: ["Darth Tyranus", "Darth Maul", "Darth Vader", "General Grievous"], correct: "Darth Maul" },
+        { question: "¿Qué personaje dice la célebre frase: 'Que la Fuerza esté con ustedes' por primera vez?", options: ["Obi-Wan Kenobi", "General Dodonna", "Yoda", "Han Solo"], correct: "General Dodonna" },
+        { question: "¿Quién mata al Emperador Palpatine en 'El Retorno del Jedi'?", options: ["Luke Skywalker", "Darth Vader", "Lando Calrissian", "Yoda"], correct: "Darth Vader" },
+        { question: "¿En qué película ocurre el primer duelo entre Anakin Skywalker y el Conde Dooku?", options: ["La Amenaza Fantasma", "El Ataque de los Clones", "La Venganza de los Sith", "Una Nueva Esperanza"], correct: "El Ataque de los Clones" },
+        { question: "¿Cómo se llama el cazarrecompensas que es arrojado al pozo del Sarlacc?", options: ["Greedo", "Boba Fett", "Jango Fett", "Bossk"], correct: "Boba Fett" },
+        { question: "¿Qué orden emite el Emperador para exterminar a todos los Jedi?", options: ["Orden 11", "Orden 66", "Orden 99", "Protocolo Sith"], correct: "Orden 66" },
+        { question: "¿Quién es el padre de Leia Organa?", options: ["Bail Organa", "Anakin Skywalker", "Obi-Wan Kenobi", "Wilhuff Tarkin"], correct: "Anakin Skywalker" },
+        { question: "¿En qué planeta se desarrolla el duelo final entre Obi-Wan y Anakin en 'La Venganza de los Sith'?", options: ["Coruscant", "Mustafar", "Utapau", "Kamino"], correct: "Mustafar" },
+        { question: "¿Cuál es el rango militar de Han Solo en la película 'El Retorno del Jedi'?", options: ["Capitán", "General", "Almirante", "Comandante"], correct: "General" },
+        { question: "¿De qué sustancia están compuestos los clones del ejército de la República?", options: ["Circuitos robóticos", "ADN de Jango Fett", "Células de Yoda", "ADN de Palpatine"], correct: "ADN de Jango Fett" },
+        { question: "¿Quién destruye la primera Estrella de la Muerte?", options: ["Wedge Antilles", "Luke Skywalker", "Han Solo", "Obi-Wan Kenobi"], correct: "Luke Skywalker" },
+        { question: "¿Qué parte del cuerpo pierde Anakin en el duelo contra Dooku en 'El Ataque de los Clones'?", options: ["Pierna izquierda", "Brazo derecho", "Ambas manos", "La oreja"], correct: "Brazo derecho" },
+        { question: "¿Quién es el primer personaje en hablar en la película 'Una Nueva Esperanza'?", options: ["R2-D2", "C-3PO", "Darth Vader", "Princesa Leia"], correct: "C-3PO" },
+        { question: "¿Qué senadora representa al planeta Naboo en las Precuelas?", options: ["Mon Mothma", "Padmé Amidala", "Leia Organa", "Shmi Skywalker"], correct: "Padmé Amidala" },
+        { question: "¿Cuál es el verdadero nombre del Emperador?", options: ["Darth Sidious", "Sheev Palpatine", "Snoke", "Tarkin"], correct: "Sheev Palpatine" },
+        { question: "¿Qué descubre Luke Skywalker en la cueva en Dagobah durante su entrenamiento?", options: ["La antigua espada de Yoda", "Una visión de sí mismo bajo la máscara de Vader", "Los restos de su padre", "Un holograma del Emperador"], correct: "Una visión de sí mismo bajo la máscara de Vader" },
+        { question: "¿Quién dice la frase: '¡Es una trampa!'?", options: ["Lando Calrissian", "Almirante Ackbar", "Han Solo", "Mace Windu"], correct: "Almirante Ackbar" }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    const questionElement = document.getElementById("question");
+    const answerButtons = document.getElementById("answer-buttons");
+    const nextButton = document.getElementById("next-btn");
+    const scoreElement = document.getElementById("score");
+    const currentQElement = document.getElementById("current-q");
+
+    function shuffleArray(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        showQuestion();
+    }
+
+    function showQuestion() {
+        resetState();
+        let currentQuestion = questions[currentQuestionIndex];
+        currentQElement.innerText = currentQuestionIndex + 1;
+        scoreElement.innerText = score;
+        
+        questionElement.innerHTML = currentQuestion.question;
+        
+        // Lógica para cambiar el texto del botón en la última pregunta
+        if (currentQuestionIndex === questions.length - 1) {
+            nextButton.innerHTML = "Finalizar Entrenamiento";
+        } else {
+            nextButton.innerHTML = "Siguiente Pregunta";
+        }
+
+        let shuffledOptions = shuffleArray([...currentQuestion.options]);
+        
+        shuffledOptions.forEach(option => {
+            const button = document.createElement("button");
+            button.innerHTML = option;
+            button.classList.add("btn");
+            answerButtons.appendChild(button);
+            if (option === currentQuestion.correct) {
+                button.dataset.correct = true;
+            }
+            button.addEventListener("click", selectAnswer);
+        });
+    }
+
+    function resetState() {
+        nextButton.style.display = "none";
+        while (answerButtons.firstChild) {
+            answerButtons.removeChild(answerButtons.firstChild);
+        }
+    }
+
+    function selectAnswer(e) {
+        const selectedBtn = e.target;
+        const isCorrect = selectedBtn.dataset.correct === "true";
+        if (isCorrect) {
+            selectedBtn.classList.add("correct");
+            score++;
+            scoreElement.innerText = score;
+        } else {
+            selectedBtn.classList.add("wrong");
+        }
+        
+        Array.from(answerButtons.children).forEach(button => {
+            if (button.dataset.correct === "true") {
+                button.classList.add("correct");
+            }
+            button.disabled = true;
+            button.style.cursor = "default";
+        });
+        nextButton.style.display = "block";
+    }
+
+    function showResults() {
+        resetState();
+        let title = "";
+        let message = "";
+        
+        // Se gana la empanada con 22 o más respuestas correctas
+        if(score >= 22) {
+            title = "¡HAS GANADO UNA EMPANADA!";
+            message = "Has respondido correctamente al menos 22 de 25 preguntas. Tu conocimiento de la galaxia es absoluto y tu recompensa te espera.";
+        } else if(score >= 15) {
+            title = "CABALLERO JEDI";
+            message = "Tu entrenamiento ha terminado, pero aún tienes mucho que aprender sobre la Fuerza.";
+        } else if(score >= 8) {
+            title = "PADAWAN";
+            message = "Estás en el buen camino, pero tus habilidades aún son rudimentarias.";
+        } else {
+            title = "ESCLAVO DE JABBA";
+            message = "Tu conocimiento de la galaxia es escaso. Has sido congelado en carbonita.";
+        }
+        
+        questionElement.innerHTML = `
+            <div style="font-family: 'Star Jedi', sans-serif; color: var(--sw-yellow); font-size: 1.5em; margin-bottom: 20px; text-shadow: 0 0 15px rgba(255, 232, 31, 0.4);">${title}</div>
+            <div style="margin-bottom: 15px; color: var(--sw-blue);">Respuestas correctas: ${score} de ${questions.length}</div>
+            <div style="color: #ccc; font-size: 0.9em;">${message}</div>
+        `;
+        
+        nextButton.innerHTML = "Reiniciar Entrenamiento";
+        nextButton.style.display = "block";
+    }
+
+    nextButton.addEventListener("click", () => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            showQuestion();
+        } else {
+            showResults();
+        }
+    });
+
+    startQuiz();
+</script>
+
+</body>
+</html>
+```
