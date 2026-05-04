@@ -200,9 +200,8 @@
 
 <div class="stars"></div>
 
-<!-- Audio di sottofondo e SFX del lightsaber -->
+<!-- Teniamo solo l'audio di sottofondo nel tag HTML. Il suono della spada sarà gestito via RAM (Web Audio API) -->
 <audio id="bg-music" loop src="musica.mp3"></audio>
-<audio id="sfx-saber" src="saber.mp3"></audio>
 
 <div class="quiz-container">
     <h1>MAY THE KNOWLEDGE BE WITH YOU</h1>
@@ -258,10 +257,48 @@
     const scoreElement = document.getElementById("score");
     const currentQElement = document.getElementById("current-q");
     
-    // Prendo entrambi gli elementi audio
     const bgMusic = document.getElementById('bg-music');
-    const sfxSaber = document.getElementById('sfx-saber');
     let musicStarted = false;
+
+    // --- SISTEMA AUDIO A ZERO LATENZA (WEB AUDIO API) ---
+    let audioContext;
+    let saberBuffer; // Qui salviamo il suono in RAM
+
+    // Inizializziamo l'audio non appena la pagina si carica
+    window.addEventListener('load', () => {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        loadSaberSound();
+    });
+
+    // Scarichiamo e decodifichiamo il file MP3 nella memoria RAM
+    async function loadSaberSound() {
+        try {
+            const response = await fetch('saber.mp3');
+            const arrayBuffer = await response.arrayBuffer();
+            // Decodifica il file e lo salva in saberBuffer. Da questo momento è pronto a suonare in 0 millisecondi
+            saberBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        } catch (error) {
+            console.error("Errore nel caricamento del suono del lightsaber:", error);
+        }
+    }
+
+    // Funzione per suonare l'audio istantaneamente
+    function playSaberSound() {
+        if (!audioContext || !saberBuffer) return;
+        
+        // Se l'audio context è bloccato dal browser, lo sblocchiamo
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        
+        // Creiamo una "sorgente" vuota e le iniettiamo il suono già caricato in RAM
+        const source = audioContext.createBufferSource();
+        source.buffer = saberBuffer;
+        source.connect(audioContext.destination);
+        
+        // Il parametro 0 significa "SUONA SUBITO ADESSO"
+        source.start(0); 
+    }
 
     function shuffleArray(array) {
         return array.sort(() => Math.random() - 0.5);
@@ -309,7 +346,7 @@
     }
 
     function selectAnswer(e) {
-        // --- TRUCCO AUDIO 1: Musica di sottofondo al primo click ---
+        // --- TRUCCO MUSICA SOTTOFONDO ---
         if (!musicStarted) {
             bgMusic.play().then(() => {
                 musicStarted = true;
@@ -318,9 +355,8 @@
             });
         }
 
-        // --- TRUCCO AUDIO 2: Suono del lightsaber ad ogni click ---
-        sfxSaber.currentTime = 0; // Riavvolge l'audio per poterlo ripetere velocemente
-        sfxSaber.play().catch(error => console.log("SFX bloccato dal browser"));
+        // --- SUONO SPADA LASER IMMEDIATO ---
+        playSaberSound();
 
         const selectedBtn = e.target;
         const isCorrect = selectedBtn.dataset.correct === "true";
