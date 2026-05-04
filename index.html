@@ -200,9 +200,10 @@
 
 <div class="stars"></div>
 
-<!-- Audio tags -->
+<!-- Audio tags (musica sottofondo, vittoria e sconfitta) -->
 <audio id="bg-music" loop src="musica.mp3"></audio>
 <audio id="win-music" loop src="cantina.mp3"></audio>
+<audio id="defeat-music" loop src="defeat.mp3"></audio>
 
 <div class="quiz-container">
     <h1>MAY THE KNOWLEDGE BE WITH YOU</h1>
@@ -257,12 +258,14 @@
     
     const bgMusic = document.getElementById('bg-music');
     const winMusic = document.getElementById('win-music');
+    const defeatMusic = document.getElementById('defeat-music');
     let musicStarted = false;
 
-    // --- SISTEMA AUDIO A ZERO LATENZA ---
+    // --- SISTEMA AUDIO A ZERO LATENZA (SFX) ---
     let audioContext;
     let saberBuffer; 
-    let wrongBuffer; // Buffer per il suono dell'errore
+    let wrongBuffer; 
+    let nextBuffer; // Buffer per il suono "Prossima domanda"
 
     window.addEventListener('load', () => {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -271,15 +274,18 @@
 
     async function loadSounds() {
         try {
-            // Carica il suono della spada
             const saberResponse = await fetch('saber.mp3');
             const saberArrayBuffer = await saberResponse.arrayBuffer();
             saberBuffer = await audioContext.decodeAudioData(saberArrayBuffer);
 
-            // Carica il suono dell'errore
             const wrongResponse = await fetch('wrong.mp3');
             const wrongArrayBuffer = await wrongResponse.arrayBuffer();
             wrongBuffer = await audioContext.decodeAudioData(wrongArrayBuffer);
+
+            // Carichiamo il suono per il bottone successivo
+            const nextResponse = await fetch('next.mp3');
+            const nextArrayBuffer = await nextResponse.arrayBuffer();
+            nextBuffer = await audioContext.decodeAudioData(nextArrayBuffer);
 
         } catch (error) {
             console.error("Errore nel caricamento dei suoni:", error);
@@ -304,9 +310,9 @@
     function startQuiz() {
         currentQuestionIndex = 0;
         score = 0;
-        // Se ricomincia, ferma la musica della cantina e riprende quella epica se era partita
-        winMusic.pause();
-        winMusic.currentTime = 0;
+        // Se ricomincia, ferma tutte le musiche di fine gioco e resetta
+        winMusic.pause(); winMusic.currentTime = 0;
+        defeatMusic.pause(); defeatMusic.currentTime = 0;
         showQuestion();
     }
 
@@ -361,10 +367,10 @@
             selectedBtn.classList.add("correct");
             score++;
             scoreElement.innerText = score;
-            playSound(saberBuffer); // Suono spada laser
+            playSound(saberBuffer); 
         } else {
             selectedBtn.classList.add("wrong");
-            playSound(wrongBuffer); // Suono blaster/errore
+            playSound(wrongBuffer); 
         }
         
         Array.from(answerButtons.children).forEach(button => {
@@ -382,23 +388,29 @@
         let title = "";
         let message = "";
         
+        // Fermiamo sempre la musica di sottofondo alla fine
+        bgMusic.pause();
+        
         if(score >= 22) {
             title = "¡HAS GANADO UNA EMPANADA!";
             message = "Has respondido correctamente al menos 22 de 25 preguntas. Tu conocimiento de la galaxia es absoluto y tu recompensa te espera.";
-            
-            // FERMA la musica epica e FAR PARTIRE la cantina!
-            bgMusic.pause();
             winMusic.play().catch(e => console.log("Autoplay cantina bloccato"));
-
+            defeatMusic.pause(); // Sicurezza
         } else if(score >= 15) {
             title = "CABALLERO JEDI";
             message = "Tu entrenamiento ha terminado, pero aún tienes mucho que aprender sobre la Fuerza.";
+            defeatMusic.play().catch(e => console.log("Autoplay sconfitta bloccato"));
+            winMusic.pause(); // Sicurezza
         } else if(score >= 8) {
             title = "PADAWAN";
             message = "Estás en el buen camino, pero tus habilidades aún son rudimentarias.";
+            defeatMusic.play().catch(e => console.log("Autoplay sconfitta bloccato"));
+            winMusic.pause();
         } else {
             title = "ESCLAVO DE JABBA";
             message = "Tu conocimiento de la galaxia es escaso. Has sido congelado en carbonita.";
+            defeatMusic.play().catch(e => console.log("Autoplay sconfitta bloccato"));
+            winMusic.pause();
         }
         
         questionElement.innerHTML = `
@@ -412,6 +424,9 @@
     }
 
     nextButton.addEventListener("click", () => {
+        // Suono di R2-D2 istantaneo quando clicco il bottone
+        playSound(nextBuffer);
+        
         currentQuestionIndex++;
         if (currentQuestionIndex < questions.length) {
             showQuestion();
