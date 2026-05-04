@@ -8,6 +8,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Star+Jedi&display=swap" rel="stylesheet">
     <style>
+        /* Reset universale per centratura perfetta */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         :root {
             --sw-yellow: #FFE81F;
             --sw-blue: #4bd5ee;
@@ -57,7 +62,7 @@
             to { transform: translateY(-2000px); }
         }
 
-        /* --- STILE SCHERMATA INTRO --- */
+        /* --- STILE SCHERMATA INTRO (CENTRATO PULITO) --- */
         #intro-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -68,18 +73,19 @@
             align-items: center;
             z-index: 100;
             text-align: center;
-            padding: 20px;
+            padding: 40px;
+            gap: 60px; /* Spaziatura perfetta e simmetrica tra testo e bottone */
         }
 
         .intro-text {
             font-family: 'Star Jedi', sans-serif;
             color: var(--sw-yellow);
-            font-size: 2em;
-            line-height: 1.5;
-            max-width: 800px;
+            font-size: 2.2em;
+            line-height: 1.4;
+            max-width: 700px; /* Evita che il testo sia troppo largo su schermi grandi */
             text-shadow: 0 0 20px rgba(255, 232, 31, 0.6);
             animation: fadeIn 2s ease-in-out;
-            margin-bottom: 50px;
+            margin: 0; /* Niente margini per centratura assoluta */
         }
 
         @keyframes fadeIn {
@@ -91,16 +97,17 @@
             background: transparent;
             color: var(--sw-blue);
             border: 2px solid var(--sw-blue);
-            padding: 15px 40px;
+            padding: 15px 50px;
             border-radius: 4px;
             cursor: pointer;
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            font-size: 1.2em;
+            font-size: 1.1em;
             text-transform: uppercase;
             letter-spacing: 3px;
             transition: 0.3s;
             animation: pulse 2s infinite;
+            margin: 0; /* Niente margini */
         }
 
         .start-btn:hover {
@@ -111,7 +118,7 @@
 
         @keyframes pulse {
             0% { box-shadow: 0 0 10px rgba(75, 213, 238, 0.2); }
-            50% { box-shadow: 0 0 20px rgba(75, 213, 238, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(75, 213, 238, 0.6); }
             100% { box-shadow: 0 0 10px rgba(75, 213, 238, 0.2); }
         }
 
@@ -125,7 +132,7 @@
             max-width: 700px;
             width: 90%;
             position: relative;
-            display: none; /* Nascosto all'inizio */
+            display: none; 
         }
 
         .quiz-container::after {
@@ -146,6 +153,7 @@
             color: var(--sw-yellow);
             text-shadow: 0 0 15px rgba(255, 232, 31, 0.4);
             margin-top: 0;
+            margin-bottom: 25px;
             font-size: 1.8em;
         }
 
@@ -250,7 +258,7 @@
 
         @media (max-width: 600px) {
             h1 { font-size: 1.3em; }
-            .intro-text { font-size: 1.4em; }
+            .intro-text { font-size: 1.5em; } /* Dimensione ridotta perfetta per mobile */
             .question { font-size: 0.95em; }
             .btn { font-size: 0.8em; padding: 12px; }
             .hud-tracker { font-size: 0.75em; }
@@ -261,25 +269,25 @@
 
 <div class="stars"></div>
 
-<!-- Audio tags spostati fuori per essere accessibili subito -->
+<!-- Audio tags -->
 <audio id="bg-music" loop src="musica.mp3"></audio>
 <audio id="win-music" loop src="cantina.mp3"></audio>
 <audio id="defeat-music" loop src="defeat.mp3"></audio>
 
-<!-- SCHERMATA INTRO DRAMMATICA -->
+<!-- SCHERMATA INTRO -->
 <div id="intro-screen">
     <div class="intro-text">Ha llegado el momento de descubrir si realmente conoces la Fuerza.</div>
     <button id="start-btn" class="start-btn">Iniciar Prueba</button>
 </div>
 
-<!-- CONTENITORE QUIZ (NASCOSTO ALL'INIZIO) -->
+<!-- CONTENITORE QUIZ -->
 <div class="quiz-container" id="quiz-container">
     <h1>MAY THE KNOWLEDGE BE WITH YOU</h1>
     <div class="hud-tracker">
         <span>Sector: <span id="current-q">1</span>/25</span>
         <span>Puntos: <span id="score">0</span></span>
     </div>
-    <div class="question" id="question">Texto de la pregunta</div>
+    <div class="question" id="question"></div>
     <div class="btn-grid" id="answer-buttons"></div>
     <div class="controls">
         <button class="next-btn" id="next-btn">Siguiente Pregunta</button>
@@ -374,16 +382,13 @@
 
     // --- LOGICA INTRO E AVVIO ---
     startBtn.addEventListener('click', () => {
-        // Facciamo scomparire l'intro e apparire il quiz
         introScreen.style.display = 'none';
         quizContainer.style.display = 'block';
         
-        // Avviamo la musica di sottofondo! Questo è il click che sblocca tutto.
         bgMusic.play().then(() => {
             console.log("Musica partita con successo!");
         }).catch(e => console.log("Autoplay bloccato nonostante il click."));
         
-        // Avviamo il quiz
         startQuiz();
     });
 
@@ -470,11 +475,6 @@
             defeatMusic.pause(); 
         } else if(score >= 22) {
             title = "¡MAESTRA JEDI!";
-            message = "Has respondido correctamente a las 25 preguntas. ¡Has ganado una empanada! Tu dominio de la Fuerza es absoluto y legendario.";
-            winMusic.play().catch(e => console.log("Autoplay cantina bloccato"));
-            defeatMusic.pause(); 
-        } else if(score >= 22) {
-            title = "¡MAESTRA JEDI!";
             message = "Has respondido correctamente " + score + " de 25 preguntas. ¡Has ganado una empanada! Tu conocimiento de la galaxia es formidable.";
             winMusic.play().catch(e => console.log("Autoplay cantina bloccato"));
             defeatMusic.pause();
@@ -506,14 +506,13 @@
     }
 
     nextButton.addEventListener("click", () => {
-        // Se il bottone è "Reiniciar", ricarica la pagina da zero (come F5)
         if (nextButton.innerHTML === "Reiniciar Entrenamiento") {
             location.reload();
             return;
         }
 
         playSound(nextBuffer);
-
+        
         currentQuestionIndex++;
         if (currentQuestionIndex < questions.length) {
             showQuestion();
@@ -526,4 +525,3 @@
 
 </body>
 </html>
-        
